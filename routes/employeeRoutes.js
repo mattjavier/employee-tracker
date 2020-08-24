@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const db = require('../db')
+// const db = require('../db')
 
 // GET all employees, roles, departments
 
@@ -12,3 +12,5 @@ const db = require('../db')
 // PUT updates to employee managers
 
 // GET employees by manager
+
+module.exports = router
