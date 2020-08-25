@@ -152,20 +152,102 @@ const viewEmployees = () => {
 }
 
 const updateEmployeeRole = () => {
-  db.query(`
-    SELECT employee.name FROM employee
-  `, (err, employees) => {
+  db.query(`SELECT * FROM role`, (err, roles) => {
+    if (err) { console.log(err) }
+
+    roles = roles.map(role => ({
+      name: role.title,
+      value: role.id
+    }))
+
+    db.query(`
+      SELECT * FROM employee`, (err, employees) => {
+      if (err) { console.log(err) }
+
+      employees = employees.map(employee => ({
+        name: `${employee.first_name} ${employee.last_name}`,
+        value: employee.id
+      }))
+
+      prompt([
+        {
+          type: 'list',
+          name: 'employee_id',
+          message: 'Which employee would you like to update?',
+          choices: employees
+        },
+        {
+          type: 'list',
+          name: 'role_id',
+          message: 'Which role would you like to select?',
+          choices: roles
+        }
+      ])
+      .then(({ employee_id, role_id }) => {
+        db.query(`
+          UPDATE employee
+          SET role_id = ${role_id}
+          WHERE id = ${employee_id}
+        `)
+        console.log('Employee Role Updated!')
+        start()
+      })
+      .catch(err => { console.log(err) })  
+    })
+  })
+}
+
+const updateEmployeeManager = () => {
+  db.query(`SELECT * FROM employee`, (err, employees) => {
+    if (err) { console.log(err) }
+
     employees = employees.map(employee => ({
       name: `${employee.first_name} ${employee.last_name}`,
       value: employee.id
     }))
 
-    
+    db.query(`
+      SELECT DISTINCT manager.id, CONCAT(manager.first_name, ' ', manager.last_name) AS name
+      FROM employee
+      LEFT JOIN employee manager
+      ON manager.id = employee.manager_id
+    `, (err, managers) => {
+      if (err) { console.log(err) }
+
+      managers = managers.map(manager => ({
+        name: manager.name,
+        value: manager.id
+      }))
+
+      managers = managers.filter(manager => manager.name !== null)
+      
+      managers.unshift({ name: 'None', value: null })
+      prompt([
+        {
+          type: 'list',
+          name: 'employee_id',
+          message: 'Which employee would you like to update?',
+          choices: employees
+        },
+        {
+          type: 'list',
+          name: 'manager_id',
+          message: 'Who would you like to choose as their new manager?',
+          choices: managers
+        }
+      ])
+      .then(({ employee_id, manager_id }) => {
+        db.query(`
+          UPDATE employee
+          SET manager_id = ${manager_id}
+          WHERE id = ${employee_id}
+        `)
+        console.log('Employee Manager Updated!')
+        start()
+      })
+      .catch(err => { console.log(err) })
+    })
   })
-}
-
-const updateEmployeeManager = () => {
-
 }
  
 const viewEmployeesByManager = () => {
