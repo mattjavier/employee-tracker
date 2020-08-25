@@ -1,4 +1,4 @@
-const { prompt } = require('inquirer')
+const { prompt, registerPrompt } = require('inquirer')
 const mysql = require('mysql2')
 require('console.table')
 
@@ -186,11 +186,13 @@ const updateEmployeeRole = () => {
       .then(({ employee_id, role_id }) => {
         db.query(`
           UPDATE employee
-          SET role_id = ${role_id}
-          WHERE id = ${employee_id}
-        `)
-        console.log('Employee Role Updated!')
-        start()
+          SET role_id = ?
+          WHERE id = ?
+        `, [role_id, employee_id], err => {
+          if (err) { console.log(err) }
+          console.log('Employee Role Updated!')
+          start()
+        })
       })
       .catch(err => { console.log(err) })  
     })
@@ -206,68 +208,191 @@ const updateEmployeeManager = () => {
       value: employee.id
     }))
 
-    db.query(`
-      SELECT DISTINCT manager.id, CONCAT(manager.first_name, ' ', manager.last_name) AS name
-      FROM employee
-      LEFT JOIN employee manager
-      ON manager.id = employee.manager_id
-    `, (err, managers) => {
-      if (err) { console.log(err) }
+    let managers = employees 
+    managers.unshift({ name: 'None', value: null })
 
-      managers = managers.map(manager => ({
-        name: manager.name,
-        value: manager.id
-      }))
-
-      managers = managers.filter(manager => manager.name !== null)
-      
-      managers.unshift({ name: 'None', value: null })
-      prompt([
-        {
-          type: 'list',
-          name: 'employee_id',
-          message: 'Which employee would you like to update?',
-          choices: employees
-        },
-        {
-          type: 'list',
-          name: 'manager_id',
-          message: 'Who would you like to choose as their new manager?',
-          choices: managers
-        }
-      ])
-      .then(({ employee_id, manager_id }) => {
-        db.query(`
-          UPDATE employee
-          SET manager_id = ${manager_id}
-          WHERE id = ${employee_id}
-        `)
+    prompt([
+      {
+        type: 'list',
+        name: 'employee_id',
+        message: 'Which employee would you like to update?',
+        choices: employees
+      },
+      {
+        type: 'list',
+        name: 'manager_id',
+        message: 'Who would you like to choose as their new manager?',
+        choices: managers
+      }
+    ])
+    .then(({ employee_id, manager_id }) => {
+      db.query(`
+        UPDATE employee
+        SET manager_id = ?
+        WHERE id = ?
+      `, [manager_id, employee_id], err => {
+        if (err) { console.log(err) }
         console.log('Employee Manager Updated!')
         start()
       })
-      .catch(err => { console.log(err) })
     })
+    .catch(err => { console.log(err) })
   })
 }
  
 const viewEmployeesByManager = () => {
+  db.query(`
+    SELECT DISTINCT manager.id, CONCAT(manager.first_name, ' ', manager.last_name) AS name FROM employee
+    LEFT JOIN employee manager
+    ON manager.id = employee.manager_id;
+  `, (err, managers) => {
+    if (err) { console.log(err) }
 
+    managers = managers.map(manager => ({
+      name: manager.name,
+      value: manager.id
+    }))
+
+    managers = managers.filter(manager => manager.name !== null)
+
+    prompt({
+      type: 'list',
+      name: 'manager_id',
+      message: 'Whose employees would you like to see?',
+      choices: managers
+    })
+    .then(({ manager_id }) => {
+      db.query(`
+        SELECT * FROM employee
+        WHERE manager_id = ?
+      `, manager_id, (err, employees) => {
+        if (err) { console.log(err) }
+        console.table(employees)
+        start()
+      })
+    })
+  })
 }
 
 const deleteDepartment = () => {
+  db.query(`SELECT * FROM department`, (err, departments) => {
+    if (err) { console.log(err) }
 
+    departments = departments.map(department => ({
+      name: department.name,
+      value: department.id
+    }))
+
+    prompt({
+      type: 'list',
+      name: 'department_id',
+      message: 'Which department would you like to delete?',
+      choices: departments
+    })
+    .then(({ department_id }) => {
+      db.query(`
+        DELETE FROM department
+        WHERE id = ?
+      `, department_id, err => {
+        if (err) { console.log(err) }
+        console.log('Department Deleted!')
+        start()
+      })
+    })
+    .catch(err => { console.log(err) })
+  })
 }
 
 const deleteRole = () => {
+  db.query(`SELECT * FROM role`, (err, roles) => {
+    if (err) { console.log(err) }
 
+    roles = roles.map(role => ({
+      name: role.title,
+      value: role.id
+    }))
+
+    prompt({
+      type: 'list',
+      name: 'role_id',
+      message: 'Which role would you like to delete?',
+      choices: roles
+    })
+    .then(({ role_id }) => {
+      db.query(`
+        DELETE FROM role
+        WHERE id = ?
+      `, role_id, err => {
+        if (err) { console.log(err) }
+        console.log('Role Deleted!')
+        start()
+      })
+    })
+    .catch(err => { console.log(err) })
+  })
 }
 
 const deleteEmployee = () => {
+  db.query(`SELECT * FROM employee`, (err, employees) => {
+    if (err) { console.log(err) }
 
+    employees = employees.map(employee => ({
+      name: `${employee.first_name} ${employee.last_name}`,
+      value: employee.id
+    }))
+
+    prompt({
+      type: 'list',
+      name: 'employee_id',
+      message: 'Which employee would you like to delete?',
+      choices: employees
+    })
+    .then(({ employee_id }) => {
+      db.query(`
+        DELETE FROM employee
+        WHERE id = ?
+      `, employee_id, err => {
+        if (err) { console.log(err) }
+        console.log('Employee Deleted!')
+        start()
+      })
+    })
+    .catch(err => { console.log(err) })
+  })
 }
 
 const viewBudget = () => {
+  db.query(`SELECT * FROM department`, (err, departments) => {
+    if (err) { console.log(err) }
 
+    departments = departments.map(department => ({
+      name: department.name,
+      value: department.id
+    }))
+
+    prompt({
+      type: 'list',
+      name: 'department_id',
+      message: 'Which department budget would you like to view?',
+      choices: departments
+    })
+    .then(({ department_id }) => {
+      db.query(`
+        SELECT SUM(role.salary) as budget
+        FROM employee 
+        LEFT JOIN role
+        ON employee.role_id = role.id
+        LEFT JOIN department 
+        ON role.department_id = department.id
+        WHERE department.id = ?
+      `, department_id, (err, res) => {
+        if (err) { console.log(err) }
+        console.log(`The total utilized budget for this department is $${res[0].budget}`)
+        start()
+      })
+    })
+    .catch(err => { console.log(err) })
+  })
 }
 
 const start = () => {
