@@ -114,7 +114,7 @@ const addEmployee = () => {
 
 const viewDepartments = () => {
   db.query(`
-    SELECT * FROM department
+    SELECT name FROM department
   `, (err, departments) => {
     if (err) { console.log(err) }
     console.table(departments)
@@ -387,7 +387,11 @@ const viewBudget = () => {
         WHERE department.id = ?
       `, department_id, (err, res) => {
         if (err) { console.log(err) }
-        console.log(`The total utilized budget for this department is $${res[0].budget}`)
+        if (res[0].budget !== null) {
+          console.log(`The total utilized budget for this department is $${res[0].budget}`)
+        } else {
+          console.log(`The total utilized budget for this department is $0`)
+        }
         start()
       })
     })
