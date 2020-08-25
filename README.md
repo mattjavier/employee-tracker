@@ -24,6 +24,18 @@ You will be prompted with questions that may require selecting choices or typing
 
 ## Images
 
+* The start of the application, run with `node index.js`
+  
+<img src="./assets/1.png" width="500">
+
+* A command to display all current employees, uses a 'SELECT' query in the backend
+
+<img src="./assets/2.png" width="500">
+
+* As shown below, deleting a department, 'Finance', deletes all employees under that department
+
+<img src="./assets/3.png" width="500">
+
 ## Demo Video
 
-A demo video is available in the `assets/` directory and can also be viewed [here]().
+A demo video is available in the `assets/` directory and can also be viewed [here](https://drive.google.com/file/d/19kJLg4q110EwTy0Tp1_vWydA13XyZ9c9/view).
