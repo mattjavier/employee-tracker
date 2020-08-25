@@ -2,8 +2,10 @@ const { prompt } = require('inquirer')
 const mysql = require('mysql2')
 require('console.table')
 
+// mysql connection to database
 const db = mysql.createConnection('mysql://root:JaJ012566m@localhost/employee_db')
 
+// add a department to department table
 const addDepartment = () => {
   prompt({
     type: 'input',
@@ -20,10 +22,14 @@ const addDepartment = () => {
   .catch(err => console.log(err))
 }
 
+// add a role to role table
 const addRole = () => {
+
+  // get all departments in order to select a department for the role
   db.query ('SELECT * FROM department', (err, departments) => {
     if (err) { console.log(err) }
 
+    // map department name to id
     departments = departments.map(department => ({
       name: department.name,
       value: department.id
@@ -58,22 +64,29 @@ const addRole = () => {
   })
 }
 
+// add employee to employee table
 const addEmployee = () => {
+  
+  // get all roles for employee
   db.query('SELECT * FROM role', (err, roles) => {
     if (err) { console.log(err) }
 
+    // map role title to id
     roles = roles.map(role => ({
       name: role.title,
       value: role.id
     }))
 
+    // get all employees to select a manager
     db.query('SELECT * FROM employee', (err, employees) => {
 
+      // map employee full name to id
       employees = employees.map(employee => ({
         name: `${employee.first_name} ${employee.last_name}`,
         value: employee.id
       }))
 
+      // give an option for no manager
       employees.unshift({ name: 'None', value: null })
 
       prompt([
@@ -112,6 +125,7 @@ const addEmployee = () => {
   })
 } 
 
+// view all departments
 const viewDepartments = () => {
   db.query(`
     SELECT name FROM department
@@ -122,6 +136,7 @@ const viewDepartments = () => {
   })
 }
 
+// view all roles
 const viewRoles = () => {
   db.query(`
     SELECT role.title, role.salary FROM role
@@ -132,6 +147,7 @@ const viewRoles = () => {
   })
 }
 
+// view al employees
 const viewEmployees = () => {
   db.query(`
     SELECT employee.id, employee.first_name, employee.last_name,
@@ -151,19 +167,25 @@ const viewEmployees = () => {
   })
 }
 
+// update the role id for an employee
 const updateEmployeeRole = () => {
+
+  // get all roles to choose from
   db.query(`SELECT * FROM role`, (err, roles) => {
     if (err) { console.log(err) }
 
+    // map role title to id
     roles = roles.map(role => ({
       name: role.title,
       value: role.id
     }))
 
+    // get all employees to select from
     db.query(`
       SELECT * FROM employee`, (err, employees) => {
       if (err) { console.log(err) }
 
+      // map employee full name to id
       employees = employees.map(employee => ({
         name: `${employee.first_name} ${employee.last_name}`,
         value: employee.id
@@ -199,16 +221,23 @@ const updateEmployeeRole = () => {
   })
 }
 
+// update manager id for a selected employee
 const updateEmployeeManager = () => {
+
+  // get all employees
   db.query(`SELECT * FROM employee`, (err, employees) => {
     if (err) { console.log(err) }
 
+    // map full name to id
     employees = employees.map(employee => ({
       name: `${employee.first_name} ${employee.last_name}`,
       value: employee.id
     }))
 
+    // create managers array to be the same as employees 
     let managers = employees 
+
+    // give an option for no manager
     managers.unshift({ name: 'None', value: null })
 
     prompt([
@@ -239,8 +268,11 @@ const updateEmployeeManager = () => {
     .catch(err => { console.log(err) })
   })
 }
- 
+
+// view employees by their manager
 const viewEmployeesByManager = () => {
+
+  // get all managers, only distinct values, no repeats
   db.query(`
     SELECT DISTINCT manager.id, CONCAT(manager.first_name, ' ', manager.last_name) AS name FROM employee
     LEFT JOIN employee manager
@@ -248,11 +280,13 @@ const viewEmployeesByManager = () => {
   `, (err, managers) => {
     if (err) { console.log(err) }
 
+    // map name to id
     managers = managers.map(manager => ({
       name: manager.name,
       value: manager.id
     }))
 
+    // take out null values if any
     managers = managers.filter(manager => manager.name !== null)
 
     prompt({
@@ -274,10 +308,15 @@ const viewEmployeesByManager = () => {
   })
 }
 
+
+// remove a department from department table
 const deleteDepartment = () => {
+
+  // get all departments
   db.query(`SELECT * FROM department`, (err, departments) => {
     if (err) { console.log(err) }
 
+    // map name to id
     departments = departments.map(department => ({
       name: department.name,
       value: department.id
@@ -303,10 +342,14 @@ const deleteDepartment = () => {
   })
 }
 
+// remove a role from role table
 const deleteRole = () => {
+
+  // get all roles
   db.query(`SELECT * FROM role`, (err, roles) => {
     if (err) { console.log(err) }
 
+    // map role to id
     roles = roles.map(role => ({
       name: role.title,
       value: role.id
@@ -332,10 +375,14 @@ const deleteRole = () => {
   })
 }
 
+// remove an employee from employee table
 const deleteEmployee = () => {
+
+  // get all employees
   db.query(`SELECT * FROM employee`, (err, employees) => {
     if (err) { console.log(err) }
 
+    // map name to id
     employees = employees.map(employee => ({
       name: `${employee.first_name} ${employee.last_name}`,
       value: employee.id
@@ -361,10 +408,14 @@ const deleteEmployee = () => {
   })
 }
 
+// view total utilized budget for a department
 const viewBudget = () => {
+
+  // get all departments to choose from
   db.query(`SELECT * FROM department`, (err, departments) => {
     if (err) { console.log(err) }
 
+    // map name to id
     departments = departments.map(department => ({
       name: department.name,
       value: department.id
@@ -377,6 +428,8 @@ const viewBudget = () => {
       choices: departments
     })
     .then(({ department_id }) => {
+
+      // get the sum of the column role.salary in a given department for all employees
       db.query(`
         SELECT SUM(role.salary) as budget
         FROM employee 
@@ -399,6 +452,7 @@ const viewBudget = () => {
   })
 }
 
+// start function: prompt user for initial action
 const start = () => {
   prompt([
     {
