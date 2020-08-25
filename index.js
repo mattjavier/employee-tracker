@@ -1,4 +1,4 @@
-const { prompt, registerPrompt } = require('inquirer')
+const { prompt } = require('inquirer')
 const mysql = require('mysql2')
 require('console.table')
 
